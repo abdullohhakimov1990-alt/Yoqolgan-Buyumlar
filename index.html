@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yo‘qolgan buyumlar byurosi | Maktab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Navbar -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-xl shadow-md shadow-indigo-200">
+                    <i class="fa-solid fa-box-open"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-900 leading-tight">Yo‘qolgan buyumlar byurosi</h1>
+                    <p class="text-xs text-slate-500">Maktab topilmalar platformasi</p>
+                </div>
+            </div>
+
+            <button onclick="openAddModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-5 py-2.5 rounded-xl transition flex items-center gap-2 shadow-sm">
+                <i class="fa-solid fa-plus"></i>
+                <span>Topilgan buyum qo‘shish</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-8 flex-grow w-full">
+
+        <!-- Stats & Search Banner -->
+        <div class="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl p-6 md:p-8 text-white mb-8 shadow-lg">
+            <div class="max-w-2xl">
+                <h2 class="text-2xl md:text-3xl font-extrabold mb-2">Narsangizni yo‘qotib qo‘ydingizmi?</h2>
+                <p class="text-indigo-100 text-sm md:text-base mb-6">Sinf xonalari va koridorlardan topilgan barcha buyumlar shu yerda jamlanadi. Qidiruv orqali o‘z narsangizni tezda toping.</p>
+            </div>
+
+            <!-- Search and Filter -->
+            <div class="flex flex-col md:flex-row gap-3">
+                <div class="relative flex-grow">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="searchInput" oninput="renderItems()" placeholder="Buyum nomi yoki xona raqamini kiriting..." 
+                        class="w-full pl-11 pr-4 py-3 rounded-xl text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 shadow-sm">
+                </div>
+                <select id="statusFilter" onchange="renderItems()" class="px-4 py-3 rounded-xl text-slate-800 bg-white font-medium focus:outline-none shadow-sm">
+                    <option value="all">Barcha holatlar</option>
+                    <option value="found" selected>Egasini kutmoqda</option>
+                    <option value="claimed">Egasiga qaytarilgan</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Category Tabs -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6" id="categoryTabs">
+            <button onclick="setCategory('Barchasi')" class="cat-btn active bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">Barchasi</button>
+            <button onclick="setCategory('Darslik va daftarlar')" class="cat-btn bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">📚 Darslik va daftarlar</button>
+            <button onclick="setCategory('O‘quv qurollari')" class="cat-btn bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">✏️ O‘quv qurollari</button>
+            <button onclick="setCategory('Kiyim-kechak')" class="cat-btn bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">🧥 Kiyim-kechak</button>
+            <button onclick="setCategory('Elektronika')" class="cat-btn bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">🎧 Elektronika</button>
+            <button onclick="setCategory('Boshqa')" class="cat-btn bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition">🎒 Boshqa</button>
+        </div>
+
+        <!-- Items Grid -->
+        <div id="itemsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Kartochkalar JS orqali shu yerga chiqadi -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-16 bg-white rounded-2xl border border-slate-200">
+            <div class="text-5xl mb-3">🔍</div>
+            <h3 class="text-lg font-bold text-slate-800">Hech qanday buyum topilmadi</h3>
+            <p class="text-slate-500 text-sm mt-1">Qidiruv so‘zini o‘zgartirib ko‘ring yoki yangi topilgan buyumni qo‘shing.</p>
+        </div>
+    </main>
+
+    <!-- Add Item Modal -->
+    <div id="addModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-bold text-slate-900">Topilgan buyumni joylash</h3>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+            </div>
+
+            <form id="addItemForm" onsubmit="addNewItem(event)" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Buyum nomi *</label>
+                    <input type="text" id="itemTitle" required placeholder="Buyum nomini kiriting" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Toifa *</label>
+                        <select id="itemCategory" class="w-full px-3 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Darslik va daftarlar">Darslik va daftarlar</option>
+                            <option value="O‘quv qurollari">O‘quv qurollari</option>
+                            <option value="Kiyim-kechak">Kiyim-kechak</option>
+                            <option value="Elektronika">Elektronika</option>
+                            <option value="Boshqa">Boshqa</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-700 mb-1">Topilgan joy *</label>
+                        <input type="text" id="itemLocation" required placeholder="Xona yoki qavatni kiriting" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Qo‘shimcha ma’lumot</label>
+                    <textarea id="itemDesc" rows="2" placeholder="Rangi, belgisi yoki hozir qayerda saqlanayotgani..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Buyum rasmi (ixtiyoriy)</label>
+                    <input type="file" id="itemImage" accept="image/*" class="w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeAddModal()" class="px-4 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium">Bekor qilish</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">Saytga joylash</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Claim & Verification Modal -->
+    <div id="claimModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-lg font-bold text-slate-900">Buyum egasi ekaningizni tasdiqlang</h3>
+                <button onclick="closeClaimModal()" class="text-slate-400 hover:text-slate-600 text-xl">&times;</button>
+            </div>
+            <p id="claimItemName" class="text-sm text-indigo-600 font-semibold mb-4"></p>
+
+            <form onsubmit="confirmClaim(event)" class="space-y-4">
+                <input type="hidden" id="claimItemId">
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Ism va familiyangiz *</label>
+                    <input type="text" id="ownerName" required placeholder="Ism va familiyangizni kiriting" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Sinfingiz *</label>
+                    <input type="text" id="ownerClass" required placeholder="Sinfingizni kiriting" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-slate-700 mb-1">Tasdiqlovchi belgi (isbot) *</label>
+                    <textarea id="ownerProof" rows="2" required placeholder="Buyum ichidagi yozuv, maxsus belgi yoki qayerda qoldirganingizni yozing..." class="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                </div>
+                <label class="flex items-start gap-2.5 text-xs text-slate-600 cursor-pointer bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <input type="checkbox" id="ownerConfirmCheck" required class="mt-0.5 rounded text-indigo-600 focus:ring-indigo-500">
+                    <span>Ushbu buyum haqiqatan ham menga tegishli ekanini va ma’lumotlar to‘g‘riligini tasdiqlayman.</span>
+                </label>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeClaimModal()" class="px-4 py-2.5 rounded-xl text-slate-600 hover:bg-slate-100 font-medium">Yopish</button>
+                    <button type="submit" class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-semibold">Tasdiqlash va olish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-slate-200 py-5 text-center text-sm text-slate-500 mt-12">
+        Maktab "Yo‘qolgan buyumlar byurosi" loyihasi &copy; 2026
+    </footer>
+
+    <script>
+        let currentCategory = 'Barchasi';
+
+        const defaultItems = [
+            {
+                id: 1,
+                title: "Informatika darsligi (7-sinf)",
+                category: "Darslik va daftarlar",
+                location: "204-xona, 2-parta",
+                description: "Muqovasi ko‘k rangda, ichida ism yozilmagan. Navbatchi o‘quvchida turibdi.",
+                date: "Bugun, 10:15",
+                image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80",
+                status: "found",
+                owner: "",
+                proof: ""
+            },
+            {
+                id: 2,
+                title: "Qora rangli penal (ruchka va qalamlar bilan)",
+                category: "O‘quv qurollari",
+                location: "2-qavat koridor, deraza tokchasi",
+                description: "Ichida 3 ta ko‘k ruchka, chizg‘ich va o‘chirg‘ich bor.",
+                date: "Bugun, 09:30",
+                image: "https://images.unsplash.com/photo-1583485088034-697b5bc54ccd?auto=format&fit=crop&w=600&q=80",
+                status: "found",
+                owner: "",
+                proof: ""
+            },
+            {
+                id: 3,
+                title: "Oq sport krossovkasi (sumkada)",
+                category: "Kiyim-kechak",
+                location: "Sport zali kiyinish xonasi",
+                description: "Jismoniy tarbiya darsidan keyin qolib ketgan. 39-o‘lcham.",
+                date: "Kecha, 14:20",
+                image: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=600&q=80",
+                status: "found",
+                owner: "",
+                proof: ""
+            }
+        ];
+
+        let items = JSON.parse(localStorage.getItem('lostAndFoundItems')) || defaultItems;
+
+        function saveItems() {
+            localStorage.setItem('lostAndFoundItems', JSON.stringify(items));
+        }
+
+        function setCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.textContent.includes(cat) || (cat === 'Barchasi' && btn.textContent === 'Barchasi')) {
+                    btn.className = "cat-btn active bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition";
+                } else {
+                    btn.className = "cat-btn bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition";
+                }
+            });
+            renderItems();
+        }
+
+        function renderItems() {
+            const grid = document.getElementById('itemsGrid');
+            const emptyState = document.getElementById('emptyState');
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+
+            const filtered = items.filter(item => {
+                const matchesCat = currentCategory === 'Barchasi' || item.category === currentCategory;
+                const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
+                const matchesSearch = item.title.toLowerCase().includes(search) || 
+                                      item.location.toLowerCase().includes(search) ||
+                                      item.description.toLowerCase().includes(search);
+                return matchesCat && matchesStatus && matchesSearch;
+            });
+
+            grid.innerHTML = '';
+
+            if (filtered.length === 0) {
+                emptyState.classList.remove('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            filtered.forEach(item => {
+                const isClaimed = item.status === 'claimed';
+                const card = document.createElement('div');
+                card.className = `bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col ${isClaimed ? 'opacity-85' : ''}`;
+
+                card.innerHTML = `
+                    <div class="relative h-48 bg-slate-100">
+                        <img src="${item.image}" alt="${item.title}" class="w-full h-full object-cover">
+                        <span class="absolute top-3 left-3 bg-white/95 backdrop-blur-sm text-slate-700 text-xs font-semibold px-3 py-1 rounded-full shadow-sm">
+                            ${item.category}
+                        </span>
+                        <span class="absolute top-3 right-3 ${isClaimed ? 'bg-emerald-500' : 'bg-amber-500'} text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                            ${isClaimed ? 'Tasdiqlangan' : 'Topilgan'}
+                        </span>
+                    </div>
+                    <div class="p-5 flex-grow flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-1.5 text-xs text-indigo-600 font-semibold mb-1.5">
+                                <i class="fa-solid fa-location-dot"></i>
+                                <span>${item.location}</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-900 mb-2">${item.title}</h3>
+                            <p class="text-sm text-slate-600 mb-4">${item.description || 'Qo‘shimcha izoh kiritilmagan.'}</p>
+                            ${isClaimed && item.proof ? `<p class="text-xs text-slate-500 bg-slate-50 p-2.5 rounded-lg border border-slate-100 mb-3"><span class="font-semibold text-slate-700">Tasdiq:</span> ${item.proof}</p>` : ''}
+                        </div>
+
+                        <div class="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                            <span class="text-xs text-slate-400"><i class="fa-regular fa-clock mr-1"></i>${item.date}</span>
+                            ${isClaimed 
+                                ? `<span class="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg"><i class="fa-solid fa-circle-check mr-1"></i>${item.owner}</span>`
+                                : `<button onclick="openClaimModal(${item.id})" class="bg-indigo-50 hover:bg-indigo-600 text-indigo-600 hover:text-white text-xs font-bold px-3.5 py-2 rounded-lg transition">Bu mening buyumim!</button>`
+                            }
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function openAddModal() {
+            document.getElementById('addModal').classList.remove('hidden');
+            document.getElementById('addModal').classList.add('flex');
+        }
+
+        function closeAddModal() {
+            document.getElementById('addModal').classList.add('hidden');
+            document.getElementById('addModal').classList.remove('flex');
+        }
+
+        function addNewItem(e) {
+            e.preventDefault();
+            const title = document.getElementById('itemTitle').value;
+            const category = document.getElementById('itemCategory').value;
+            const location = document.getElementById('itemLocation').value;
+            const description = document.getElementById('itemDesc').value;
+            const fileInput = document.getElementById('itemImage');
+
+            const saveAndRender = (imgUrl) => {
+                const newItem = {
+                    id: Date.now(),
+                    title,
+                    category,
+                    location,
+                    description,
+                    date: "Hozirgina",
+                    image: imgUrl,
+                    status: "found",
+                    owner: "",
+                    proof: ""
+                };
+                items.unshift(newItem);
+                saveItems();
+                renderItems();
+                document.getElementById('addItemForm').reset();
+                closeAddModal();
+            };
+
+            if (fileInput.files && fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    saveAndRender(event.target.result);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                saveAndRender("https://images.unsplash.com/photo-1586075010923-2dd4570fb338?auto=format&fit=crop&w=600&q=80");
+            }
+        }
+
+        function openClaimModal(id) {
+            const item = items.find(i => i.id === id);
+            if (!item) return;
+            document.getElementById('claimItemId').value = id;
+            document.getElementById('claimItemName').textContent = "Buyum: " + item.title;
+            document.getElementById('claimModal').classList.remove('hidden');
+            document.getElementById('claimModal').classList.add('flex');
+        }
+
+        function closeClaimModal() {
+            document.getElementById('claimModal').classList.add('hidden');
+            document.getElementById('claimModal').classList.remove('flex');
+        }
+
+        function confirmClaim(e) {
+            e.preventDefault();
+            const id = Number(document.getElementById('claimItemId').value);
+            const name = document.getElementById('ownerName').value;
+            const sClass = document.getElementById('ownerClass').value;
+            const proof = document.getElementById('ownerProof').value;
+
+            const item = items.find(i => i.id === id);
+            if (item) {
+                item.status = 'claimed';
+                item.owner = `${name} (${sClass})`;
+                item.proof = proof;
+                saveItems();
+                renderItems();
+            }
+            document.getElementById('ownerName').value = '';
+            document.getElementById('ownerClass').value = '';
+            document.getElementById('ownerProof').value = '';
+            document.getElementById('ownerConfirmCheck').checked = false;
+            closeClaimModal();
+        }
+
+        renderItems();
+    </script>
+</body>
+</html>x
